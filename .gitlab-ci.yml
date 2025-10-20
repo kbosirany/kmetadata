@@ -1,0 +1,75 @@
+stages:
+  - checks
+  - deploy
+
+image: rocker/geospatial:latest
+
+variables:
+  CI_CACHE_DIR: "$CI_PROJECT_DIR/ci"
+  R_LIBS_USER: "$CI_CACHE_DIR/lib"
+  BRANCH_PAGES: "gitlab-pages"
+  COVERAGE_REPORT: "$CI_CACHE_DIR/coverage.RDS"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - $CI_CACHE_DIR
+
+.default_build:
+  before_script:
+    - mkdir -p $R_LIBS_USER
+    - echo "R_LIBS='$R_LIBS_USER'" > .Renviron
+    - R -q -e 'if (!require(devtools)) install.packages("devtools")'
+    - R -q -e 'devtools::install_deps(dependencies = TRUE)'
+
+check:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "gitlab-pages" || $CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: on_success
+    - when: never
+  extends: .default_build
+  variables:
+    NOT_CRAN: "true"
+  stage: checks
+  script:
+    - R -q -e 'devtools::check(vignettes = TRUE, error_on = "error")'
+
+coverage:
+  stage: checks
+  allow_failure: true
+  extends: .default_build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - Rscript -e 'devtools::install()'
+    - Rscript -e 'remotes::install_cran(c("covr", "DT"))'
+    - Rscript -e 'cov <- covr::package_coverage(type = "all", quiet = FALSE);cov;saveRDS(cov, Sys.getenv("COVERAGE_REPORT"))'
+  artifacts:
+    paths:
+      - ci/coverage.RDS
+  coverage: '/kmetadata Coverage: ([0-9.]+)%/'
+
+.deploy:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_COMMIT_BRANCH == "dev" && $CI_PIPELINE_SOURCE != "schedule"'
+  artifacts:
+    paths:
+      - public/
+
+pages:
+  extends:
+    - .default_build
+    - .deploy
+  stage: deploy
+  needs:
+    - job: coverage
+      artifacts: true
+  script:
+    - R -q -e 'if (!require(pkgdown)) install.packages("pkgdown")'
+    - R -q -e 'pkgdown::build_site()'
+    - R -q -e 'remotes::install_cran(c("covr", "DT"))'
+    - R -q -e 'covr::report(readRDS(Sys.getenv("COVERAGE_REPORT")), "public/coverage.html")'
