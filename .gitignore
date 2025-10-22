@@ -1,2 +1,7 @@
 .Rproj.user
 docs/*
+
+# Vignette build files
+vignettes/*.html
+vignettes/*.R
+inst/doc

@@ -6,80 +6,44 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The **kmetadata** package provides tools for managing and manipulating
-metadata in R. It simplifies the process of creating, editing, and
-loading metadata for datasets, making it easier to document variable
-names, labels, and value definitions.
+The **kmetadata** package provides tools for creating and managing
+metadata for R datasets. It simplifies documenting variable names,
+labels, and value definitions through an Excel-based workflow.
 
 ## Installation
 
-You can install the development version of kmetadata from GitLab:
+Install the development version from GitLab:
 
 ``` r
 # install.packages("remotes")
 remotes::install_gitlab("kbosirany/kmetadata")
 ```
 
-## Features
-
-- **Create metadata templates** for variable names and unique values
-- **Support for multiple data formats**: data.frames, lists, and files
-- **Excel integration**: Export metadata to Excel for manual editing
-- **Automatic caching**: Load existing metadata or create new templates
-- **Flexible workflow**: Force recreation or use cached versions
-
-## Basic Usage
-
-### Creating Variable Metadata
-
-Create metadata templates for documenting variable names:
+## Quick Start
 
 ``` r
 library(kmetadata)
 
-# Sample dataset
-survey_data <- data.frame(
-  participant_id = 1:5,
-  age_years = c(25, 30, 35, 28, 42),
-  gender = c("M", "F", "M", "F", "M"),
-  satisfaction = c("High", "Medium", "High", "Low", "Medium")
+# Sample data
+data <- data.frame(
+  id = 1:3,
+  gender = c("M", "F", "M"),
+  status = c("Active", "Inactive", "Active")
 )
 
 # Create variable metadata
-var_metadata <- create_metadata(
-  survey_data,
-  path = "survey.csv",
-  which = "vars"
-)
+var_meta <- create_metadata(data, path = "data.csv", which = "vars")
+var_meta
+#> [[1]]
+#>    label new_label description
+#> 1     id        NA          NA
+#> 2 gender        NA          NA
+#> 3 status        NA          NA
 
-# View the structure
-str(var_metadata)
-#> List of 1
-#>  $ :'data.frame':    4 obs. of  3 variables:
-#>   ..$ label      : chr [1:4] "participant_id" "age_years" "gender" "satisfaction"
-#>   ..$ new_label  : logi [1:4] NA NA NA NA
-#>   ..$ description: logi [1:4] NA NA NA NA
-```
-
-The metadata includes columns for: - `label`: Original variable name -
-`new_label`: Space for descriptive labels - `description`: Space for
-detailed descriptions
-
-### Creating Value Metadata
-
-Document unique values within categorical variables:
-
-``` r
-# Create value metadata for specific variables
-value_metadata <- create_metadata(
-  survey_data,
-  path = "survey.csv",
-  which = "values",
-  vars = c("gender", "satisfaction")
-)
-
-# View gender metadata
-value_metadata$gender
+# Create value metadata for categorical variables
+val_meta <- create_metadata(data, path = "data.csv", which = "values",
+                            vars = c("gender", "status"))
+val_meta$gender
 #> # A tibble: 2 × 3
 #>   label new_label description
 #>   <chr> <lgl>     <lgl>      
@@ -87,143 +51,52 @@ value_metadata$gender
 #> 2 M     NA        NA
 ```
 
-### Writing Metadata to Excel
+## Key Features
 
-Export metadata templates to Excel for manual editing:
+- **Create metadata templates** for variables and values
+- **Export to Excel** for manual editing and documentation
+- **Smart caching** with `load_metadata()` - loads existing or creates
+  new
+- **Multi-sheet support** for Excel workbooks
+- **Simple workflow** - create, edit, load
 
-``` r
-# Create and write metadata to Excel file
-create_metadata(
-  survey_data,
-  path = "data/survey.csv",
-  which = "vars",
-  write_results = TRUE
-)
+## Typical Workflow
 
-# This creates: data/survey - vars - metadata.xlsx
-```
-
-### Loading or Creating Metadata
-
-Use `load_metadata()` to automatically load existing metadata or create
-new templates:
+1.  **Create metadata template**:
 
 ``` r
-# First time: creates metadata
-metadata <- load_metadata(
-  path = "data/survey.csv",
-  which = "vars",
-  vars = c("participant_id", "age_years", "gender", "satisfaction")
-)
-
-# After manual editing in Excel, this loads the edited version
-metadata <- load_metadata(
-  path = "data/survey.csv",
-  which = "vars",
-  vars = c("participant_id", "age_years", "gender", "satisfaction")
-)
-
-# Force recreation (ignores cached version)
-metadata <- load_metadata(
-  path = "data/survey.csv",
-  which = "vars",
-  vars = c("participant_id", "age_years", "gender", "satisfaction"),
-  force = TRUE
-)
+create_metadata("data/survey.csv", which = "vars",
+                write_results = TRUE)
 ```
 
-### Working with Multiple Sheets
+2.  **Edit in Excel** - add labels and descriptions
 
-Create metadata for multi-sheet Excel files:
+3.  **Load edited metadata**:
 
 ``` r
-# Data with multiple sheets
-data_list <- list(
-  demographics = data.frame(
-    id = 1:3,
-    age = c(25, 30, 35),
-    gender = c("M", "F", "M")
-  ),
-  responses = data.frame(
-    id = 1:3,
-    q1 = c("Yes", "No", "Yes"),
-    q2 = c("A", "B", "A")
-  )
-)
-
-# Create variable metadata for all sheets
-var_meta <- create_metadata(
-  data_list,
-  path = "survey_data.xlsx",
-  which = "vars",
-  write_results = TRUE
-)
-
-# Create value metadata for specific variables in each sheet
-val_meta <- create_metadata(
-  data_list,
-  path = "survey_data.xlsx",
-  which = "values",
-  vars = list(
-    demographics = c("gender"),
-    responses = c("q1", "q2")
-  ),
-  write_results = TRUE
-)
+metadata <- load_metadata(path = "data/survey.csv",
+                          which = "vars",
+                          vars = colnames(data))
 ```
 
-## Workflow Example
+## Documentation
 
-1.  **Create initial metadata template**:
+- **Vignette**: `vignette("kmetadata-intro")` - Comprehensive guide with
+  examples
+- **Functions**: `?create_metadata`, `?load_metadata`
+- **File naming**: Outputs follow pattern
+  `[filename] - [type] - metadata.xlsx`
 
-``` r
-create_metadata(
-  "data/survey.csv",
-  which = "vars",
-  write_results = TRUE
-)
-```
+## Learn More
 
-2.  **Edit the Excel file manually** to add labels and descriptions
+See the [package vignette](vignettes/kmetadata-intro.Rmd) for detailed
+examples including:
 
-3.  **Load the edited metadata**:
-
-``` r
-metadata <- load_metadata(
-  path = "data/survey.csv",
-  which = "vars",
-  vars = colnames(survey_data)
-)
-```
-
-4.  **Use metadata in your analysis**:
-
-``` r
-# Access descriptive labels
-metadata$vars$new_label
-
-# Access descriptions
-metadata$vars$description
-```
-
-## File Naming Convention
-
-Metadata files are automatically named following this pattern:
-
-    [original_filename] - [type] - metadata.xlsx
-
-Examples: - `survey.csv` → `survey - vars - metadata.xlsx` -
-`survey.csv` → `survey - values - metadata.xlsx` - `data.xlsx` →
-`data - vars - metadata.xlsx`
-
-## Getting Help
-
-For more information on specific functions:
-
-``` r
-?create_metadata
-?load_metadata
-```
+- Variable and value metadata creation
+- Working with multi-sheet Excel files
+- Custom file paths and options
+- Complete workflow examples
+- Tips and best practices
 
 ## License
 
@@ -231,5 +104,6 @@ AGPL (\>= 3)
 
 ## Author
 
-Kevin Bosirany Orlando (<kevinbosirany@gmail.com>) ORCID:
-0009-0009-2784-3108
+Kevin Bosirany Orlando  
+Email: <kevinbosirany@gmail.com>  
+ORCID: [0009-0009-2784-3108](https://orcid.org/0009-0009-2784-3108)
