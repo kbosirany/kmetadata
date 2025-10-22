@@ -89,8 +89,7 @@ metadata <- load_metadata(path = "data/survey.csv",
 
 ## Learn More
 
-See the [package vignette](vignettes/kmetadata-intro.Rmd) for detailed
-examples including:
+See the package vignette for detailed examples including:
 
 - Variable and value metadata creation
 - Working with multi-sheet Excel files
