@@ -13,7 +13,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports:
     kread,
-    dplyr
+    dplyr,
+    writexl
 Suggests: 
     testthat (>= 3.0.0)
 Remotes:

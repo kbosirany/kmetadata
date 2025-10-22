@@ -2,6 +2,9 @@
 
 S3method(create_metadata,character)
 S3method(create_metadata,data.frame)
+S3method(create_metadata,list)
 export(create_metadata)
+export(load_metadata)
 import(dplyr)
 import(kread)
+importFrom(stats,setNames)
