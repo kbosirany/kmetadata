@@ -1,5 +1,6 @@
 .Rproj.user
 docs/*
+public/*
 
 # Vignette build files
 vignettes/*.html
