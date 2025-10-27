@@ -64,7 +64,10 @@ load_metadata <- function(
     )
   }
 
-  metadata <- metadata[names(metadata) != "README"]
+  # Remove README sheet if it exists
+  if (!is.null(names(metadata)) && "README" %in% names(metadata)) {
+    metadata <- metadata[names(metadata) != "README"]
+  }
 
   if (simplify && length(metadata) == 1) metadata <- metadata[[1]]
 
