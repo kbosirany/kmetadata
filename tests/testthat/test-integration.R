@@ -2,13 +2,14 @@ test_that("full workflow: create, write, and load metadata", {
   skip_on_cran()
   skip_if_not_installed("kread")
   skip_if_not_installed("writexl")
+  skip_if_not_installed("readr")
 
   # Setup
   temp_dir <- tempdir()
   data_file <- file.path(temp_dir, "workflow_test.csv")
   meta_file <- file.path(
     temp_dir,
-    "workflow_test - vars - metadata.xlsx"
+    "workflow_test - metadata - vars.xlsx"
   )
 
   # Clean up if exists
@@ -20,9 +21,10 @@ test_that("full workflow: create, write, and load metadata", {
     id = 1:5,
     name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
     department = c("Sales", "IT", "Sales", "HR", "IT"),
-    score = c(85, 90, 88, 92, 87)
+    score = c(85, 90, 88, 92, 87),
+    stringsAsFactors = FALSE
   )
-  write.csv(test_data, data_file, row.names = FALSE)
+  readr::write_csv(test_data, data_file)
 
   # Step 2: Create and write metadata
   metadata_created <- create_metadata(
@@ -57,16 +59,18 @@ test_that("full workflow: create, write, and load metadata", {
         "Full name of employee",
         "Department assignment",
         "Performance rating (0-100)"
-      )
+      ),
+      stringsAsFactors = FALSE
     )
   )
   writexl::write_xlsx(edited_metadata, meta_file)
 
-  # Step 4: Load the edited metadata
+  # Step 4: Load the edited metadata (use simplify = FALSE to get list)
   loaded_metadata <- load_metadata(
     path = data_file,
     which = "vars",
-    vars = c("id", "name", "department", "score")
+    vars = c("id", "name", "department", "score"),
+    simplify = FALSE
   )
 
   expect_type(loaded_metadata, "list")
@@ -76,16 +80,18 @@ test_that("full workflow: create, write, and load metadata", {
     c("ID", "Employee Name", "Department", "Performance Score")
   )
 
-  # Step 5: Force recreation
+  # Step 5: Force recreation (with simplify = TRUE for data.frame)
   recreated_metadata <- load_metadata(
     path = data_file,
     which = "vars",
     vars = c("id", "name", "department", "score"),
-    force = TRUE
+    force = TRUE,
+    simplify = TRUE
   )
 
-  # Should have NA values again
-  expect_true(all(is.na(recreated_metadata[[1]]$new_label)))
+  # Should have NA values again and be a data.frame
+  expect_s3_class(recreated_metadata, "data.frame")
+  expect_true(all(is.na(recreated_metadata$new_label)))
 
   # Clean up
   if (file.exists(data_file)) file.remove(data_file)
@@ -95,13 +101,14 @@ test_that("full workflow: create, write, and load metadata", {
 test_that("workflow with value metadata for multiple variables", {
   skip_on_cran()
   skip_if_not_installed("kread")
+  skip_if_not_installed("readr")
 
   # Setup
   temp_dir <- tempdir()
   data_file <- file.path(temp_dir, "values_workflow.csv")
   meta_file <- file.path(
     temp_dir,
-    "values_workflow - values - metadata.xlsx"
+    "values_workflow - metadata - values.xlsx"
   )
 
   # Clean up if exists
@@ -113,9 +120,10 @@ test_that("workflow with value metadata for multiple variables", {
     id = 1:6,
     gender = c("M", "F", "M", "F", "M", "F"),
     status = c("A", "I", "A", "A", "I", "A"),
-    level = c("L1", "L2", "L1", "L3", "L2", "L1")
+    level = c("L1", "L2", "L1", "L3", "L2", "L1"),
+    stringsAsFactors = FALSE
   )
-  write.csv(test_data, data_file, row.names = FALSE)
+  readr::write_csv(test_data, data_file)
 
   # Create value metadata
   value_metadata <- create_metadata(
@@ -135,16 +143,18 @@ test_that("workflow with value metadata for multiple variables", {
   expect_equal(nrow(value_metadata$status), 2) # A, I
   expect_equal(nrow(value_metadata$level), 3) # L1, L2, L3
 
-  # Load metadata - will have README sheet added
+  # Load metadata - simplify = FALSE because multiple variables
   loaded <- load_metadata(
     path = data_file,
     which = "values",
-    vars = c("gender", "status", "level")
+    vars = c("gender", "status", "level"),
+    simplify = FALSE
   )
 
   expect_type(loaded, "list")
-  # After reading from Excel, it will include README sheet
-  expect_true(length(loaded) >= 3)
+  # After removing README, should have 3 elements
+  expect_length(loaded, 3)
+  expect_named(loaded, c("gender", "status", "level"))
 
   # Clean up
   if (file.exists(data_file)) file.remove(data_file)
@@ -161,7 +171,7 @@ test_that("workflow with list data (multiple sheets)", {
   data_file <- file.path(temp_dir, "multisheet_test.xlsx")
   meta_file <- file.path(
     temp_dir,
-    "multisheet_test - vars - metadata.xlsx"
+    "multisheet_test - metadata - vars.xlsx"
   )
 
   # Clean up if exists
@@ -172,11 +182,13 @@ test_that("workflow with list data (multiple sheets)", {
   test_data <- list(
     employees = data.frame(
       emp_id = 1:3,
-      emp_name = c("Alice", "Bob", "Charlie")
+      emp_name = c("Alice", "Bob", "Charlie"),
+      stringsAsFactors = FALSE
     ),
     departments = data.frame(
       dept_id = 1:2,
-      dept_name = c("Sales", "IT")
+      dept_name = c("Sales", "IT"),
+      stringsAsFactors = FALSE
     )
   )
   writexl::write_xlsx(test_data, data_file)
@@ -204,10 +216,13 @@ test_that("workflow with list data (multiple sheets)", {
     vars = list(
       employees = c("emp_id", "emp_name"),
       departments = c("dept_id", "dept_name")
-    )
+    ),
+    simplify = FALSE
   )
 
   expect_type(loaded, "list")
+  expect_length(loaded, 2)
+  expect_named(loaded, c("employees", "departments"))
 
   # Clean up
   if (file.exists(data_file)) file.remove(data_file)
@@ -218,11 +233,12 @@ test_that("metadata persists correctly across multiple loads", {
   skip_on_cran()
   skip_if_not_installed("kread")
   skip_if_not_installed("writexl")
+  skip_if_not_installed("readr")
 
   # Setup
   temp_dir <- tempdir()
   data_file <- file.path(temp_dir, "persist_test.csv")
-  meta_file <- file.path(temp_dir, "persist_test - vars - metadata.xlsx")
+  meta_file <- file.path(temp_dir, "persist_test - metadata - vars.xlsx")
 
   # Clean up if exists
   if (file.exists(data_file)) file.remove(data_file)
@@ -232,15 +248,17 @@ test_that("metadata persists correctly across multiple loads", {
   test_data <- data.frame(
     x = 1:3,
     y = letters[1:3],
-    z = LETTERS[1:3]
+    z = LETTERS[1:3],
+    stringsAsFactors = FALSE
   )
-  write.csv(test_data, data_file, row.names = FALSE)
+  readr::write_csv(test_data, data_file)
 
   # First load - creates metadata
   meta1 <- load_metadata(
     path = data_file,
     which = "vars",
-    vars = c("x", "y", "z")
+    vars = c("x", "y", "z"),
+    simplify = FALSE
   )
 
   # Edit and save metadata
@@ -249,16 +267,18 @@ test_that("metadata persists correctly across multiple loads", {
     vars = data.frame(
       label = c("x", "y", "z"),
       new_label = c("X Variable", "Y Variable", "Z Variable"),
-      description = c("X description", "Y description", "Z description")
+      description = c("X description", "Y description", "Z description"),
+      stringsAsFactors = FALSE
     )
   )
   writexl::write_xlsx(edited, meta_file)
 
-  # Second load - should get edited version
+  # Second load - should get edited version (with simplify = FALSE)
   meta2 <- load_metadata(
     path = data_file,
     which = "vars",
-    vars = c("x", "y", "z")
+    vars = c("x", "y", "z"),
+    simplify = FALSE
   )
 
   expect_equal(
@@ -270,7 +290,8 @@ test_that("metadata persists correctly across multiple loads", {
   meta3 <- load_metadata(
     path = data_file,
     which = "vars",
-    vars = c("x", "y", "z")
+    vars = c("x", "y", "z"),
+    simplify = FALSE
   )
 
   expect_equal(
