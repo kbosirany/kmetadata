@@ -93,7 +93,7 @@ create_metadata.data.frame <- function(
   path_metadata = file.path(
     dirname(path),
     sprintf(
-      "%s - %s - metadata.xlsx",
+      "%s - metadata - %s.xlsx",
       tools::file_path_sans_ext(basename(path)),
       which
     )
@@ -164,7 +164,7 @@ create_metadata.list <- function(
   path_metadata = file.path(
     dirname(path),
     sprintf(
-      "%s - %s - metadata.xlsx",
+      "%s - metadata - %s.xlsx",
       tools::file_path_sans_ext(basename(path)),
       which
     )

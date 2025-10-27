@@ -44,11 +44,13 @@
 #'   vars = c("gender", "status")
 #' )
 #' }
-load_metadata <- function(path, which, vars, force = FALSE, ...) {
+load_metadata <- function(
+  path, which, vars, force = FALSE, simplify = TRUE, ...
+) {
   path_metadata <- file.path(
     dirname(path),
     sprintf(
-      "%s - %s - metadata.xlsx",
+      "%s - metadata - %s.xlsx",
       tools::file_path_sans_ext(basename(path)),
       which
     )
@@ -61,6 +63,10 @@ load_metadata <- function(path, which, vars, force = FALSE, ...) {
       read(path), which = which, vars = vars, path_metadata = path_metadata, ...
     )
   }
+
+  metadata <- metadata[names(metadata) != "README"]
+
+  if (simplify && length(metadata) == 1) metadata <- metadata[[1]]
 
   return(metadata)
 }
