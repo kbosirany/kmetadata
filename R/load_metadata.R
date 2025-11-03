@@ -45,7 +45,7 @@
 #' )
 #' }
 load_metadata <- function(
-  path, which, vars, force = FALSE, simplify = TRUE, ...
+  x, path, which, vars, force = FALSE, simplify = TRUE, ...
 ) {
   path_metadata <- file.path(
     dirname(path),
@@ -59,8 +59,9 @@ load_metadata <- function(
   metadata <- try(read(path_metadata), silent = TRUE)
 
   if (inherits(metadata, "try-error") || force) {
+    if (missing(x)) x <- read(path)
     metadata <- create_metadata(
-      read(path), which = which, vars = vars, path_metadata = path_metadata, ...
+      x, which = which, vars = vars, path_metadata = path_metadata, ...
     )
   }
 

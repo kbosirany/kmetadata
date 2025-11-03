@@ -4,7 +4,7 @@
 \alias{load_metadata}
 \title{Load or Create Metadata}
 \usage{
-load_metadata(path, which, vars, force = FALSE, simplify = TRUE, ...)
+load_metadata(x, path, which, vars, force = FALSE, simplify = TRUE, ...)
 }
 \arguments{
 \item{path}{Character string. The path to the data file for which

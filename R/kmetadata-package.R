@@ -2,8 +2,8 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @import kread
 #' @import dplyr
+#' @import kread
 #' @importFrom stats setNames
 ## usethis namespace: end
 
