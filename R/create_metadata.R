@@ -117,7 +117,7 @@ create_metadata.data.frame <- function(
           x %>%
             group_by(across(all_of(v))) %>%
             summarise(.groups = "drop") %>%
-            rename(label = all_of(v)) %>%
+            setNames("label") %>%
             mutate(new_label = NA, description = NA)
         }
       )
