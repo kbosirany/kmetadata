@@ -24,11 +24,11 @@ labels, and value definitions through an Excel-based workflow.
 
 ## Installation
 
-Install the development version from GitLab:
+Install the development version from GitHub:
 
 ``` r
 # install.packages("remotes")
-remotes::install_gitlab("kbosirany/kmetadata")
+remotes::install_github("kbosirany/kmetadata")
 ```
 
 ## Quick Start
