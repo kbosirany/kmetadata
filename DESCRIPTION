@@ -20,6 +20,6 @@ Suggests:
     knitr,
     rmarkdown
 Remotes:
-    kread=git::https://gitlab.com/kbosirany/kread.git
+    kread=git::https://github.com/kbosirany/kread.git
 Config/testthat/edition: 3
 VignetteBuilder: knitr
